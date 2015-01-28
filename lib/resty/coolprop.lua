@@ -119,7 +119,7 @@ function coolprop.k2f(k)
     return lib.K2F(k)
 end
 
-coolprop.K2F = coolprop.f2k
+coolprop.K2F = coolprop.k2f
 
 function coolprop.index(param)
     return tonumber(lib.get_param_index(param))
