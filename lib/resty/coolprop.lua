@@ -4,6 +4,7 @@ local ffi_str    = ffi.string
 local ffi_load   = ffi.load
 local ffi_cdef   = ffi.cdef
 local ffi_typeof = ffi.typeof
+local huge       = math.huge
 
 ffi_cdef[[
 double Props1SI(const char *FluidName, const char* Output);
@@ -28,7 +29,7 @@ double HAPropsSI(const char *Output, const char *Name1, double Prop1, const char
 local but = ffi_typeof "char[?]"
 local buf = ffi_new(but, 256)
 local bub = ffi_new(but, 4096)
-local lib = ffi_load "libCoolProp"
+local lib = ffi_load "/Users/bungle/Sources/CoolProp-official/build/libCoolProp.dylib"
 
 local debug = setmetatable({}, {
     __index = function(_, n)
@@ -48,13 +49,23 @@ local debug = setmetatable({}, {
 local coolprop = { debug = debug }
 
 function coolprop.props1(fluidname, output)
-    return lib.Props1SI(fluidname, output)
+    local v = lib.Props1SI(fluidname, output)
+    if v == huge then
+        return nil, coolprop.error()
+    else
+        return v
+    end
 end
 
 coolprop.Props1SI = coolprop.props1
 
 function coolprop.props(output, name1, prop1, name2, prop2, ref)
-    return lib.PropsSI(output, name1, prop1, name2, prop2, ref)
+    local v = lib.PropsSI(output, name1, prop1, name2, prop2, ref)
+    if v == huge then
+        return nil, coolprop.error()
+    else
+        return v
+    end
 end
 
 coolprop.PropsSI = coolprop.props
@@ -131,6 +142,8 @@ function coolprop.saturation(fluid, output, q, input, value)
     return lib.saturation_ancillary(fluid, output, q, input, value)
 end
 
+coolprop.saturation_ancillary = coolprop.saturation
+
 function coolprop.output(file)
     return lib.redirect_stdout(file) == 1
 end
@@ -145,12 +158,19 @@ function coolprop.set_debug_level(level)
     coolprop.debug.level = level
 end
 
-coolprop.saturation_ancillary = coolprop.saturation
-
 function coolprop.haprops(output, name1, prop1, name2, prop2, name3, prop3)
-    return  lib.HAPropsSI(output, name1, prop1, name2, prop2, name3, prop3)
+    local v = lib.HAPropsSI(output, name1, prop1, name2, prop2, name3, prop3)
+    if v == huge then
+        return nil, coolprop.error()
+    else
+        return v
+    end
 end
 
 coolprop.HAPropsSI = coolprop.haprops
+
+function coolprop.error()
+    return coolprop.get_global_param_string("errstring")
+end
 
 return coolprop
